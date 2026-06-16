@@ -1,47 +1,615 @@
-<!doctype html>
-<html lang="en">
-   <head>
-      <!-- Required meta tags -->
-      <meta charset="utf-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-      <!-- Bootstrap CSS -->
-      <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
-      
-      <link href="https://fonts.googleapis.com/css?family=Droid+Serif" rel="stylesheet" type="text/css">
-      
-      <title>Bấm để xem Mẫu dài</title>
-   </head>
-   <body>
-	  <div class="container">
-	  	<div class="row">
-	  	</div>
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Time Tap Recorder</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #0a0a0f;
+            color: #e0e0e0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 16px;
+            touch-action: manipulation;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 420px;
+            background: linear-gradient(145deg, #14141e, #1a1a2e);
+            border-radius: 32px;
+            padding: 24px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            font-size: 18px;
+            font-weight: 600;
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 0.5px;
+        }
+
+        .count-badge {
+            background: rgba(108, 92, 231, 0.2);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            color: #a29bfe;
+            border: 1px solid rgba(108, 92, 231, 0.2);
+        }
+
+        /* Nút TAP chính */
+        .tap-button {
+            width: 100%;
+            padding: 48px 0;
+            background: linear-gradient(145deg, #6c5ce7, #5a4bd1);
+            border: none;
+            border-radius: 24px;
+            font-size: 28px;
+            font-weight: 700;
+            color: white;
+            cursor: pointer;
+            transition: all 0.08s ease;
+            box-shadow: 0 8px 32px rgba(108, 92, 231, 0.35);
+            letter-spacing: 2px;
+            touch-action: manipulation;
+            -webkit-touch-callout: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tap-button:active {
+            transform: scale(0.96);
+            background: linear-gradient(145deg, #5a4bd1, #483fbf);
+            box-shadow: 0 4px 16px rgba(108, 92, 231, 0.2);
+        }
+
+        .tap-button .ripple {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(0);
+            animation: rippleAnim 0.6s linear forwards;
+            pointer-events: none;
+        }
+
+        @keyframes rippleAnim {
+            to {
+                transform: scale(4);
+                opacity: 0;
+            }
+        }
+
+        .tap-info {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 12px;
+            font-size: 13px;
+            color: #8888aa;
+            padding: 0 8px;
+        }
+
+        .tap-info span:last-child {
+            color: #a29bfe;
+            font-weight: 500;
+        }
+
+        /* Danh sách các mốc thời gian */
+        .timeline {
+            margin-top: 24px;
+            max-height: 400px;
+            overflow-y: auto;
+            border-radius: 16px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 4px 0;
+            scroll-behavior: smooth;
+        }
+
+        .timeline::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .timeline::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .timeline::-webkit-scrollbar-thumb {
+            background: #6c5ce7;
+            border-radius: 4px;
+        }
+
+        .timeline-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            font-size: 14px;
+            animation: slideIn 0.2s ease;
+        }
+
+        .timeline-item:last-child {
+            border-bottom: none;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .timeline-item .index {
+            color: #666688;
+            font-weight: 500;
+            min-width: 32px;
+            font-size: 12px;
+        }
+
+        .timeline-item .timestamp {
+            color: #f0f0ff;
+            font-weight: 500;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: 0.3px;
+        }
+
+        .timeline-item .relative {
+            color: #6c5ce7;
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+            font-size: 13px;
+        }
+
+        .timeline-item .ms-badge {
+            background: rgba(108, 92, 231, 0.15);
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            color: #a29bfe;
+        }
+
+        /* Hàng nút điều khiển */
+        .actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 16px;
+        }
+
+        .actions button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 14px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            touch-action: manipulation;
+        }
+
+        .btn-clear {
+            background: rgba(255, 107, 107, 0.12);
+            color: #ff6b6b;
+            border: 1px solid rgba(255, 107, 107, 0.15);
+        }
+
+        .btn-clear:active {
+            transform: scale(0.95);
+            background: rgba(255, 107, 107, 0.2);
+        }
+
+        .btn-export {
+            background: rgba(108, 92, 231, 0.15);
+            color: #a29bfe;
+            border: 1px solid rgba(108, 92, 231, 0.15);
+        }
+
+        .btn-export:active {
+            transform: scale(0.95);
+            background: rgba(108, 92, 231, 0.25);
+        }
+
+        .btn-copy {
+            background: rgba(0, 206, 201, 0.12);
+            color: #00cec9;
+            border: 1px solid rgba(0, 206, 201, 0.15);
+        }
+
+        .btn-copy:active {
+            transform: scale(0.95);
+            background: rgba(0, 206, 201, 0.2);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #555577;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .empty-state .icon {
+            font-size: 40px;
+            margin-bottom: 12px;
+            opacity: 0.5;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(12px);
+            padding: 12px 24px;
+            border-radius: 16px;
+            font-size: 14px;
+            color: #f0f0ff;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            opacity: 0;
+            transition: all 0.4s ease;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 16px;
+                border-radius: 24px;
+            }
+            .tap-button {
+                padding: 36px 0;
+                font-size: 24px;
+            }
+            .timeline-item {
+                padding: 8px 12px;
+                font-size: 13px;
+            }
+            .actions button {
+                font-size: 12px;
+                padding: 10px;
+            }
+            .header h1 {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>⏱️ Tap Recorder</h1>
+            <span class="count-badge" id="countBadge">0 taps</span>
+        </div>
+
+        <!-- Nút TAP -->
+        <button class="tap-button" id="tapBtn">
+            👆 TAP
+        </button>
+
+        <!-- Thông tin phụ -->
+        <div class="tap-info">
+            <span>Độ chính xác: 1ms</span>
+            <span id="lastTapTime">Chưa có tap</span>
+        </div>
+
+        <!-- Danh sách mốc thời gian -->
+        <div class="timeline" id="timeline">
+            <div class="empty-state">
+                <div class="icon">👆</div>
+                <div>Chạm vào nút TAP để ghi lại<br>thời điểm chính xác đến mili giây</div>
+            </div>
+        </div>
+
+        <!-- Hành động -->
+        <div class="actions">
+            <button class="btn-clear" id="clearBtn">🗑️ Xóa</button>
+            <button class="btn-export" id="exportBtn">📤 Xuất</button>
+            <button class="btn-copy" id="copyBtn">📋 Copy</button>
+        </div>
     </div>
 
-      <!-- Optional JavaScript -->
-      <!-- jQuery first, then Popper.js, then Bootstrap JS -->
-      <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
-      <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+    <!-- Toast thông báo -->
+    <div class="toast" id="toast"></div>
 
-      <script type="text/javascript">
-        fetch('https://pos.pages.fm/api/v1/shops/1458605/products?access_token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1aWQiOiI3YWNlYTdhOC02ZjNkLTQ5ZGItYmY0Zi00ZjdhOWIwOGJmNjMiLCJpYXQiOjE1OTE5MzAyNDEsImZiX25hbWUiOiJUaMOhaSBIw6AiLCJmYl9pZCI6IjgzOTc5MzUzNjE1NzA2MCIsImV4cCI6MTU5OTcwNjI0MX0.6R79bRcB_IIH3PHD7WBSxvbpCMGxvWlYFcpeTpqL308&page=1&page_size=30&only_has_wrong_quantity=false&exclude_has_wrong_quantity=false&nearly_out_of_stock=false&sell_fast=false&sell_slow=false&limit_quantity_to_warn=false&last_imported_price=false')
-        .then(res => res.json())
-        .then((out) => {
-        	var html_out=''; var ma='';
-		var obj = out.data[2];
-		for(var j=0;j<out.data.length;j++){
-			for(var i=0;i<out.data[j].variations.length;i++){
-				if(out.data[j].variations[i].remain_quantity>0 && out.data[j].variations[i].images.length>0 && out.data[j].custom_id.includes("dài")){
-					//console.log(out.data[0].variations[i].remain_quantity);
-					html_out+='<div style="padding-top:10px;padding-left:5px;padding-right:5px" class="col-sm-2 col-12 '+out.data[j].variations[i].fields[0].value+' R'+out.data[j].variations[i].remain_quantity+'"><img style="max-width: 100%" src="'+out.data[j].variations[i].images[0]+'"></div>';
-					ma+= out.data[j].variations[i].fields[0].value;
-				}
-		    }
-		}
-		jQuery('.container .row').html(html_out);
-		console.log(ma);
-        }).catch(err => console.error(err));
-      </script>
-      
-   </body>
+    <script>
+        (function() {
+            'use strict';
+
+            // --- State ---
+            const state = {
+                taps: [],           // Mỗi item: { absolute: timestamp (ms), relative: ms since first tap }
+                startTime: null,
+                isFirstTap: true
+            };
+
+            // --- DOM refs ---
+            const tapBtn = document.getElementById('tapBtn');
+            const timeline = document.getElementById('timeline');
+            const countBadge = document.getElementById('countBadge');
+            const lastTapTime = document.getElementById('lastTapTime');
+            const clearBtn = document.getElementById('clearBtn');
+            const exportBtn = document.getElementById('exportBtn');
+            const copyBtn = document.getElementById('copyBtn');
+            const toast = document.getElementById('toast');
+
+            // --- Toast helper ---
+            let toastTimeout = null;
+
+            function showToast(message, duration = 1500) {
+                if (toastTimeout) {
+                    clearTimeout(toastTimeout);
+                    toast.classList.remove('show');
+                }
+                // Force reflow
+                void toast.offsetWidth;
+                toast.textContent = message;
+                toast.classList.add('show');
+                toastTimeout = setTimeout(() => {
+                    toast.classList.remove('show');
+                    toastTimeout = null;
+                }, duration);
+            }
+
+            // --- Ripple effect on tap button ---
+            function createRipple(e) {
+                const btn = tapBtn;
+                const rect = btn.getBoundingClientRect();
+                const size = Math.max(rect.width, rect.height);
+                const x = (e.clientX || e.touches?.[0]?.clientX || rect.left + rect.width/2) - rect.left - size/2;
+                const y = (e.clientY || e.touches?.[0]?.clientY || rect.top + rect.height/2) - rect.top - size/2;
+
+                const ripple = document.createElement('span');
+                ripple.className = 'ripple';
+                ripple.style.width = ripple.style.height = size + 'px';
+                ripple.style.left = x + 'px';
+                ripple.style.top = y + 'px';
+                btn.appendChild(ripple);
+
+                setTimeout(() => ripple.remove(), 600);
+            }
+
+            // --- Format timestamp ---
+            function formatAbsolute(ms) {
+                const d = new Date(ms);
+                const h = String(d.getHours()).padStart(2, '0');
+                const m = String(d.getMinutes()).padStart(2, '0');
+                const s = String(d.getSeconds()).padStart(2, '0');
+                const msStr = String(d.getMilliseconds()).padStart(3, '0');
+                return `${h}:${m}:${s}.${msStr}`;
+            }
+
+            function formatRelative(ms) {
+                return ms + ' ms';
+            }
+
+            // --- Render timeline ---
+            function render() {
+                const items = state.taps;
+                if (items.length === 0) {
+                    timeline.innerHTML = `
+                        <div class="empty-state">
+                            <div class="icon">👆</div>
+                            <div>Chạm vào nút TAP để ghi lại<br>thời điểm chính xác đến mili giây</div>
+                        </div>
+                    `;
+                    countBadge.textContent = '0 taps';
+                    lastTapTime.textContent = 'Chưa có tap';
+                    return;
+                }
+
+                let html = '';
+                // Hiển thị từ cũ đến mới (trên cùng là cũ nhất)
+                for (let i = 0; i < items.length; i++) {
+                    const item = items[i];
+                    const absStr = formatAbsolute(item.absolute);
+                    const relStr = formatRelative(item.relative);
+                    const isLast = (i === items.length - 1);
+                    html += `
+                        <div class="timeline-item" style="${isLast ? 'border-bottom: 2px solid rgba(108,92,231,0.3);' : ''}">
+                            <span class="index">#${i + 1}</span>
+                            <span class="timestamp">${absStr}</span>
+                            <span class="relative">+${relStr}</span>
+                            <span class="ms-badge">ms</span>
+                        </div>
+                    `;
+                }
+
+                timeline.innerHTML = html;
+                // Tự động scroll xuống mới nhất
+                timeline.scrollTop = timeline.scrollHeight;
+
+                countBadge.textContent = items.length + ' tap' + (items.length > 1 ? 's' : '');
+                const last = items[items.length - 1];
+                lastTapTime.textContent = formatAbsolute(last.absolute) + ' (+' + formatRelative(last.relative) + ')';
+            }
+
+            // --- Thêm một tap mới ---
+            function addTap() {
+                const now = performance.now(); // độ chính xác cao (sub-millisecond) nhưng relative
+                // Lấy absolute time từ Date.now() để có timestamp thực tế
+                const absoluteNow = Date.now();
+
+                if (state.isFirstTap) {
+                    state.startTime = absoluteNow;
+                    state.isFirstTap = false;
+                    state.taps.push({
+                        absolute: absoluteNow,
+                        relative: 0
+                    });
+                } else {
+                    const relative = absoluteNow - state.startTime;
+                    state.taps.push({
+                        absolute: absoluteNow,
+                        relative: relative
+                    });
+                }
+
+                render();
+                // Ripple effect
+                createRipple({ clientX: window.innerWidth/2, clientY: window.innerHeight/2 - 100 });
+            }
+
+            // --- Xóa tất cả ---
+            function clearAll() {
+                if (state.taps.length === 0) return;
+                state.taps = [];
+                state.startTime = null;
+                state.isFirstTap = true;
+                render();
+                showToast('🗑️ Đã xóa tất cả');
+            }
+
+            // --- Xuất dữ liệu (CSV) ---
+            function exportData() {
+                if (state.taps.length === 0) {
+                    showToast('⚠️ Chưa có dữ liệu để xuất');
+                    return;
+                }
+
+                let csv = 'STT,Thời điểm tuyệt đối,Thời gian tương đối (ms)\n';
+                state.taps.forEach((item, idx) => {
+                    const absStr = formatAbsolute(item.absolute);
+                    csv += `${idx+1},"${absStr}",${item.relative}\n`;
+                });
+
+                // Tạo file và tải xuống
+                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                const url = URL.createObjectURL(blob);
+                link.href = url;
+                const dateStr = new Date().toISOString().slice(0,19).replace(/[:-]/g, '');
+                link.download = `tap_data_${dateStr}.csv`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+
+                showToast('📤 Đã xuất file CSV');
+            }
+
+            // --- Copy dữ liệu ra clipboard ---
+            function copyData() {
+                if (state.taps.length === 0) {
+                    showToast('⚠️ Chưa có dữ liệu để copy');
+                    return;
+                }
+
+                let text = '⏱️ Tap Recorder Data\n';
+                text += '───────────────────\n';
+                text += `Tổng số tap: ${state.taps.length}\n\n`;
+                text += 'STT | Thời điểm tuyệt đối | Tương đối\n';
+                text += '────┼────────────────────┼───────────\n';
+                state.taps.forEach((item, idx) => {
+                    const absStr = formatAbsolute(item.absolute);
+                    text += `${String(idx+1).padStart(3)} │ ${absStr} │ ${String(item.relative).padStart(6)} ms\n`;
+                });
+
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(text).then(() => {
+                        showToast('📋 Đã copy vào clipboard');
+                    }).catch(() => {
+                        fallbackCopy(text);
+                    });
+                } else {
+                    fallbackCopy(text);
+                }
+            }
+
+            function fallbackCopy(text) {
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                textarea.style.position = 'fixed';
+                textarea.style.opacity = '0';
+                textarea.style.left = '-9999px';
+                document.body.appendChild(textarea);
+                textarea.select();
+                try {
+                    document.execCommand('copy');
+                    showToast('📋 Đã copy vào clipboard');
+                } catch (e) {
+                    showToast('⚠️ Không thể copy');
+                }
+                document.body.removeChild(textarea);
+            }
+
+            // --- Event listeners ---
+            // Tap button: sử dụng 'touchstart' và 'mousedown' để phản hồi nhanh nhất
+            tapBtn.addEventListener('touchstart', function(e) {
+                e.preventDefault(); // ngăn scroll / zoom
+                addTap();
+                // Tạo ripple tại vị trí chạm
+                const touch = e.touches[0];
+                if (touch) {
+                    createRipple({ clientX: touch.clientX, clientY: touch.clientY });
+                }
+            }, { passive: false });
+
+            tapBtn.addEventListener('mousedown', function(e) {
+                addTap();
+                createRipple(e);
+            });
+
+            // Clear
+            clearBtn.addEventListener('click', clearAll);
+
+            // Export
+            exportBtn.addEventListener('click', exportData);
+
+            // Copy
+            copyBtn.addEventListener('click', copyData);
+
+            // --- Ngăn context menu & double-tap zoom ---
+            document.addEventListener('contextmenu', (e) => e.preventDefault());
+            document.addEventListener('dblclick', (e) => e.preventDefault());
+
+            // --- Khởi tạo ---
+            render();
+
+            // Hỗ trợ thêm: nếu người dùng ấn phím Space trên desktop
+            document.addEventListener('keydown', function(e) {
+                if (e.code === 'Space' && e.target === document.body) {
+                    e.preventDefault();
+                    addTap();
+                }
+            });
+
+            console.log('✅ Tap Recorder đã sẵn sàng!');
+            console.log('📱 Chạm vào nút TAP để ghi lại mốc thời gian.');
+
+        })();
+    </script>
+</body>
 </html>
